@@ -8,4 +8,4 @@ Code usage:
 
 OR
 
-python3 audio_tokenizer.py -filepath "/home/aswin/Downloads/audio1.wav"
+  python3 audio_tokenizer.py -filepath "/home/aswin/Downloads/audio1.wav"
