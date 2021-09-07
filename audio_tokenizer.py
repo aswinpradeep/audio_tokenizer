@@ -105,7 +105,6 @@ try:
     savepath = path + foldername+"/"
 
 
-
     os.makedirs(savepath)
     counter = 0
     for i, r in enumerate(audio_regions):
@@ -119,14 +118,7 @@ try:
         writer = csv.writer(f)
         writer.writerow(row_contents)
 
-
-
-
-    
-
+        
 except Exception as e:
     print(e)
-
-
-
 
