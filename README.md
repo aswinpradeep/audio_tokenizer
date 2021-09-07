@@ -1,6 +1,6 @@
 # Audio_tokenizer
 
-Repo contains code to tokenize audio files into multiple useful  chunks based on pauses.
+Repo contains code to tokenize audio files into multiple useful chunks based on pauses and save the details to a csv file for furthur analysis.
 
 Code usage:
 
