@@ -30,7 +30,7 @@ path='/home/aswin/ULCA/'
 min_dur = 5              # minimum duration of a valid audio event in seconds
 max_dur = 30             # maximum duration of an event
 max_silence = 0.075      # maximum duration of tolerated continuous silence within an event
-energy_threshold = 50    # threshold of detection
+energy_threshold = 25    # threshold of detection
 
 
 
@@ -108,15 +108,17 @@ try:
     os.makedirs(savepath)
     counter = 0
     for i, r in enumerate(audio_regions):
-        filename = r.save(os.path.join(savepath, videouuid + "_region_{meta.start:.3f}-{meta.end:.3f}.wav"))
-        print("region saved as: {}".format(filename))
-        counter = counter + 1
+        if((r.meta.end - r.meta.start) != max_dur ):
+            filename = r.save(os.path.join(savepath, videouuid + "_region_{meta.start:.3f}-{meta.end:.3f}.wav"))
+            print("region saved as: {}".format(filename))
+            counter = counter + 1
 
 
     row_contents.append(counter)
     with open(path+'url_details.csv', 'a') as f:
         writer = csv.writer(f)
         writer.writerow(row_contents)
+        print(row_contents)
 
         
 except Exception as e:
