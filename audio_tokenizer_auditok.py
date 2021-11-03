@@ -1,7 +1,7 @@
 ############################################################################################################
-# AIM     : Script to chunk audio files from path or youtube URL
-# USAGE   : python3 audio_tokenizer.py -url "https://www.youtube.com/watch?v=sXs4LZQhTio"
-#           python3 audio_tokenizer.py -filepath "/home/aswin/abc.wav"                            
+# AIM     : Script to chunk audio files from path or youtube URL using auditok
+# USAGE   : python3 audio_tokenizer_auditok.py -url "https://www.youtube.com/watch?v=sXs4LZQhTio"
+#           python3 audio_tokenizer_auditok.py -filepath "/home/aswin/abc.wav"                            
 ############################################################################################################
 
 import sys
@@ -16,7 +16,7 @@ import pafy
 import os
 from pytube import YouTube
 
-msg = "Audio Tokenizer"
+msg = "auditok Audio Tokenizer"
 
 # Initialize parser & add arguments
 parser = argparse.ArgumentParser(description = msg)
@@ -29,7 +29,7 @@ if args.url is None and args.filepath is None:
     sys.exit("ERROR : either enter URL or Path")
 
 # values to change 
-PATH='./AUDITOK_CHUNKS/'
+PATH='AUDITOK_CHUNKS/'
 MIN_DUR = 5              # minimum duration of a valid audio event in seconds
 MAX_DUR = 45             # maximum duration of an event
 MAX_SILENCE = 0.050      # maximum duration of tolerated continuous silence within an event
@@ -62,17 +62,20 @@ def download_youtubeaudio(url):
         os.rename(yt.streams.filter(type = "audio").first().default_filename, filepath)
 
         # subprocess.call(["python -m denoiser.enhance --dns48 --noisy_dir {} --out_dir {} --sample_rate {} --num_workers {} --device cpu".format(dir_name, dir_name, 16000, 1)], shell=True)
+        #process audio file to fixed format
         subprocess.call(["ffmpeg -loglevel error -y -i {} -ar {} -ac {} -bits_per_raw_sample {} -vn {}".format(filepath, 16000, 1, 16, output_file)], shell=True)
         os.remove(filepath)
         return output_file
     except Exception as e:
         print(e)
 
+#process audio file to fixed format
 def audio_formatter(filepath):
     output_file=str(uuid.uuid1())+".wav"
     subprocess.call(["ffmpeg -loglevel error -y -i {} -ar {} -ac {} -bits_per_raw_sample {} -vn {}".format(filepath, 16000, 1, 16, output_file)], shell=True)
     return output_file
 
+#core logic of auditok
 def audio_tokenize(var_threshold):
     audio_region = auditok.split(
         audio_file,
@@ -100,10 +103,12 @@ if args.filepath:
     audio_file = audio_formatter(args.filepath)
 
 try:
+    #generate chunks using default threshold
     max_yield_threshold = DEF_ENERGY_THRESHOLD
     audio_regions = audio_tokenize(max_yield_threshold)
     max_chunk = len(list(enumerate(audio_regions)))
 
+    #iterates to find better yielding threshold
     for i in range(20,80):
         tmp_audio_regions = audio_tokenize(i)
         tmp_no_chunks = len(list(enumerate(tmp_audio_regions)))
@@ -112,7 +117,6 @@ try:
             audio_regions = tmp_audio_regions
             max_yield_threshold = i
   
-
     print("max threshold : ", max_yield_threshold)
     audio_regions = audio_tokenize(max_yield_threshold)
 
@@ -137,7 +141,9 @@ try:
     os.makedirs(savepath)
     counter = 0
 
+    #save audio chunks
     for i, r in enumerate(audio_regions):
+        #avoid chunks with fixed duration as max_dur
         if((r.meta.end - r.meta.start) != MAX_DUR ):
             filename = r.save(os.path.join(savepath, videouuid + "_region_{meta.start:.3f}-{meta.end:.3f}.wav"))
             # print("region saved as: {}".format(filename))
@@ -147,6 +153,7 @@ try:
         print(item)
 
     row_contents.append(counter)
+    #save metadata to csv
     with open(PATH+'url_details.csv', 'a') as f:
         writer = csv.writer(f)
         writer.writerow(row_contents)

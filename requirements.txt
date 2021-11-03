@@ -1,4 +1,14 @@
+#req for audio_tokenizer_auditok.py 
 youtube_dl
 auditok
 pafy
+ffmpeg
 # denoiser
+
+#req for audio_tokenizer_webrtc
+webrtcvad
+pydub
+mutagen
+wave
+pytube
+
