@@ -36,8 +36,11 @@ if args.url is None and args.filepath is None:
 
 # values to change 
 PATH='WEBRTC_CHUNKS/'
-MIN_DUR = 5              # minimum duration of a valid audio event in seconds
-MAX_DUR = 30             # maximum duration of an event
+MIN_DUR = 3                # minimum duration of a valid audio event in seconds
+MAX_DUR = 20               # maximum duration of an event
+AGGRESSIVENESS = 3         # aggressiveness
+TRIGGER_THRESHOLD_1 = 0.9  # % of voiced frames
+TRIGGER_THRESHOLD_2 = 0.9  # % of unvoiced frames
 
 
 folder_name= PATH + str(uuid.uuid4())+"/"
@@ -176,7 +179,7 @@ def vad_collector(sample_rate, frame_duration_ms,
             # If we're NOTTRIGGERED and more than 90% of the frames in
             # the ring buffer are voiced frames, then enter the
             # TRIGGERED state.
-            if num_voiced > 0.9 * ring_buffer.maxlen:
+            if num_voiced > TRIGGER_THRESHOLD_1 * ring_buffer.maxlen:
                 triggered = True
                 start_time.append(ring_buffer[0][0].timestamp)
                 #sys.stdout.write('+(%s)' % (ring_buffer[0][0].timestamp,))
@@ -195,7 +198,7 @@ def vad_collector(sample_rate, frame_duration_ms,
             # If more than 90% of the frames in the ring buffer are
             # unvoiced, then enter NOTTRIGGERED and yield whatever
             # audio we've collected.
-            if num_unvoiced > 0.9 * ring_buffer.maxlen:
+            if num_unvoiced > TRIGGER_THRESHOLD_2 * ring_buffer.maxlen:
                 #sys.stdout.write('-(%s)' % (frame.timestamp + frame.duration))
                 end_time.append(frame.timestamp + frame.duration)
                 triggered = False
@@ -216,7 +219,7 @@ def extract_time_stamps(wav_file):
     start_time = []
     end_time = []
     audio, sample_rate = read_wave(wav_file)
-    vad = webrtcvad.Vad(3)
+    vad = webrtcvad.Vad(AGGRESSIVENESS)
     frames = frame_generator(30, audio, sample_rate)
     frames = list(frames)
     segments = vad_collector(sample_rate, 30, 300, vad, frames, start_time, end_time)
@@ -263,7 +266,7 @@ try:
         
         full_dur=(end_time_sec/1000)-(start_time_sec/1000)
 
-        #avoid chunks not within of MAX or MIN duration
+        #avoid chunks not within  MAX or MIN duration
         if full_dur >= MIN_DUR and full_dur <= MAX_DUR :
             newAudio = AudioSegment.from_wav(audio_file)
             newAudio = newAudio[start_time_sec:end_time_sec]
